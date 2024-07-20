@@ -1,11 +1,16 @@
 # Простая реализация GET запросов через FastApi
 
-# Запуск процесса
+# Запуск процесса через Dockerfile
 ## Сбилдить образ
 ```shell
 docker build -t fastapi-app:latest .
 ```
 ## Запустить образ
 ```shell
-docker run -dp 8000:8000 fastapi-app:latest
+docker run -p 8000:8000 -p 6379:6379 fastapi-app:latest
+```
+
+# Запуск процесса через docker-compose
+```
+docker-compose up -d
 ```
