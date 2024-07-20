@@ -1,9 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from typing import Optional
 import sqlite3
-import redis
-import pickle
 import random
 
 # Определим модель статьи
@@ -18,9 +15,6 @@ class Article(BaseModel):
 # Создадим экземпляр FastAPI
 app = FastAPI()
 
-# Настройка подключения к Redis
-r = redis.Redis(host='127.0.0.1', port=6379, db=0)
-
 def get_article_from_db(article_id: int):
     try:
         with sqlite3.connect('app/database.db') as db:
@@ -33,18 +27,13 @@ def get_article_from_db(article_id: int):
     except sqlite3.Error:
         raise HTTPException(status_code=500, detail="Ошибка базы данных")
 
-def get_article(article_id: int):
-    if r.exists(article_id):
-        tuple_bytes = r.get(article_id)
-        return pickle.loads(tuple_bytes)
-    
+def get_article(article_id: int):    
     article = get_article_from_db(article_id)
-    r.set(name=article_id, value=pickle.dumps(article), ex=10)
     return article
 
 @app.get("/articles/{article_id}", response_model=Article)
 async def read_article(article_id: int):
-    article = get_article(article_id)
+    article = get_article_from_db(article_id)
     return Article(
         id=article[0],
         title=article[1],
@@ -57,7 +46,7 @@ async def read_article(article_id: int):
 @app.get("/random", response_model=Article)
 async def read_random_article():
     article_id = random.randint(1, 5000)
-    article = get_article(article_id)
+    article = get_article_from_db(article_id)
     return Article(
         id=article[0],
         title=article[1],
